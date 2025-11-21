@@ -1,0 +1,332 @@
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Robojini/Tuturial_UI_Library/main/UI_Template_1"))()
+local Window = Library.CreateLib("Smilley", "RJTheme3")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local i = 0
+local check = Instance.new("Part")
+if not game.Workspace:FindFirstChild("DD") then
+check.Parent = game.workspace
+check.Anchored = true
+check.Name = "DD"
+end
+local Tab = Window:NewTab("Main")
+
+-- Подсекция
+local Section = Tab:NewSection("Functions")
+
+Section:NewTextBox("Get Info", "TextboxInfo", function(txt2)
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local txt = txt2
+local target = Players:FindFirstChild(txt)
+if not target then
+	warn("Игрок не найден:", txt)
+	return
+end
+player:WaitForChild("PlayerGui")
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.Parent = player.PlayerGui
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 280, 0, 300) -- увеличена высота для кнопки
+frame.Position = UDim2.new(0.5, -140, 0.5, -150)
+frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.12)
+frame.Parent = gui
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0, 20, 0, 20)
+close.Position = UDim2.new(1, -20, 0, 0)
+close.Text = "×"
+close.TextSize = 18
+close.Font = Enum.Font.SourceSansBold
+close.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
+close.TextColor3 = Color3.new(1, 1, 1)
+close.Parent = frame
+close.MouseButton1Click:Connect(function()
+	gui:Destroy()
+end)
+local avatar = Instance.new("ImageLabel")
+avatar.Size = UDim2.new(0, 60, 0, 60)
+avatar.Position = UDim2.new(0, 10, 0, 10)
+avatar.BackgroundTransparency = 1
+local success, url = pcall(function()
+	return Players:GetUserThumbnailAsync(target.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+end)
+avatar.Image = success and url or "rbxassetid://134377012"
+avatar.Parent = frame
+local info = Instance.new("TextLabel")
+info.Size = UDim2.new(0, 180, 0, 60)
+info.Position = UDim2.new(1, -190, 0, 10)
+info.BackgroundTransparency = 1
+info.TextColor3 = Color3.new(1, 1, 1)
+info.Font = Enum.Font.Code
+info.TextSize = 13
+info.TextXAlignment = Enum.TextXAlignment.Left
+info.Text = ("Игрок: %s\nID: %d\nАккаунт: %s"):format(
+	target.Name,
+	target.UserId,
+	os.date("%d.%m.%Y", target.AccountAge > 0 and (tick() - target.AccountAge * 86400) or tick())
+)
+info.Parent = frame
+local teleportBtn = Instance.new("TextButton")
+teleportBtn.Size = UDim2.new(1, -20, 0, 30)
+teleportBtn.Position = UDim2.new(0, 10, 0, 75) -- под информацией
+teleportBtn.Text = "Телепортироваться к игроку"
+teleportBtn.Font = Enum.Font.Code
+teleportBtn.TextSize = 14
+teleportBtn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+teleportBtn.TextColor3 = Color3.fromRGB(0,0,0)
+teleportBtn.BorderSizePixel = 5
+teleportBtn.BorderColor3 = Color3.fromRGB(0,0,0)
+teleportBtn.Parent = frame
+teleportBtn.MouseButton1Click:Connect(function()
+	local character = player.Character or player:WaitForChild("Character", 5)
+	local targetChar = target.Character or target:WaitForChild("Character", 5)
+	if not character then
+		return
+	end
+	if not targetChar then
+		return
+	end
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	local targetHrp = targetChar:FindFirstChild("HumanoidRootPart")
+	if not hrp or not targetHrp then
+		warn("Не удалось найти HumanoidRootPart")
+		return
+	end
+	hrp.CFrame = targetHrp.CFrame + Vector3.new(0, 0, 5) 
+end)
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1, -10, 0, 140) 
+scroll.Position = UDim2.new(0, 5, 0, 115) 
+scroll.BackgroundTransparency = 1
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.ScrollBarThickness = 6
+scroll.Parent = frame
+local function addLine(text)
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -10, 0, 20)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Font = Enum.Font.Code
+	label.TextSize = 14
+	label.Text = text
+	label.Parent = scroll
+	label.Position = UDim2.new(0, 0, 0, scroll.CanvasSize.Y.Offset)
+	scroll.CanvasSize = UDim2.new(0, 0, 0, scroll.CanvasSize.Y.Offset + 20)
+end
+target:WaitForChild("leaderstats", 10)
+local stats = target:FindFirstChild("leaderstats")
+if stats then
+	for _, obj in ipairs(stats:GetChildren()) do
+		local success, val = pcall(function() return obj.Value end)
+		if success then
+			addLine(obj.Name .. ": " .. tostring(val))
+		else
+			addLine(obj.Name .. " [" .. obj.ClassName .. "]")
+		end
+	end
+else
+	addLine("leaderstats error")
+end
+local dragging = false
+local startPos
+local dragStart
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+	end
+end)
+frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		if dragging then
+			local delta = input.Position - dragStart
+			frame.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + delta.X,
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y
+			)
+		end
+	end
+end)
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+end)
+
+Section:NewButton("AutoFarm", "Auto collect souls", function()
+while game.Workspace.DD do
+wait(0.04)
+local function looksLikeRandomID(str)
+    if not str:match("^[a-zA-Z0-9]+$") then
+        return false
+    end
+    local hasDigit = str:find("%d") ~= nil
+    local hasUpper = str:find("%u") ~= nil
+    local hasLower = str:find("%l") ~= nil
+    if #str < 6 then
+        return false
+    end
+    return hasDigit and hasUpper and hasLower
+end
+local targetObjects = {}
+for _, obj in ipairs(workspace.Snowdin:GetChildren()) do
+    if looksLikeRandomID(obj.Name) and obj.Name ~= "CDecor11" and obj.Name ~= "Details1" and obj.Name ~= "Details2" then
+        table.insert(targetObjects, obj)
+    end
+end
+local player = game.Players.LocalPlayer
+for i, obj in ipairs(targetObjects) do
+    task.delay((i - 1) * 0.06, function()
+        -- Проверяем актуальность объекта и персонажа перед телепортом
+        if obj and obj.Parent and player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            obj.CFrame = player.Character.HumanoidRootPart.CFrame
+        end
+    end)
+end
+end
+end)
+
+Section:NewButton("Collect Souls/Code 1 Time", "Auto collect souls", function()
+for _, obj in pairs(game.Workspace.Snowdin:GetChildren()) do
+wait(0.06)
+if obj.Name:match("^%d+$") then
+obj.CFrame = character.HumanoidRootPart.CFrame
+end
+end
+end)
+
+Section:NewButton("ShortCut (No CD)", "Auto collect souls", function()
+mouse = game.Players.LocalPlayer:GetMouse()
+tool = Instance.new("Tool")
+tool.RequiresHandle = false
+tool.Name = "ShortCut"
+tool.Activated:connect(function()
+local pos = mouse.Hit+Vector3.new(0,2.5,0)
+pos = CFrame.new(pos.X,pos.Y,pos.Z)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pos
+end)
+tool.Parent = game.Players.LocalPlayer.Backpack
+end)
+
+
+
+Section:NewToggle("God Mode", "God Mode (Noclip)", function(state)
+if state then
+	for i , obj in pairs(player.Character:GetDescendants()) do 
+		if obj:IsA("Part") then
+		obj.CanTouch = false
+		elseif obj:IsA("Model") then
+		for i , obj2 in pairs(obj:GetDescendants()) do
+		if obj2:IsA("Part") then
+		obj2.CanTouch = false
+		end
+		end
+		end
+		end
+		else
+		for i , obj in pairs(player.Character:GetDescendants()) do 
+		if obj:IsA("Part") then
+		obj.CanTouch = true
+		elseif obj:IsA("Model") then
+			for i , obj2 in pairs(obj:GetDescendants()) do
+				if obj2:IsA("Part") then
+				obj2.CanTouch = true
+				end
+			end
+		end
+	end
+end
+end)
+
+Section:NewButton("Esp", "Auto collect souls", function()
+for i , obj in pairs(game.Players:GetChildren()) do 
+local s = Instance.new("Highlight")
+local p = s:Clone()
+p.Parent = obj.Character
+end
+end)
+
+
+Section:NewDropdown("Item Finder", "DropdownInf", {"Ink Soul", "Corrupted Apple", "Apple" , "Red Soul" , "Pure Apple"}, function(s)
+    if s == "Ink Soul" then
+    game.Workspace:FindFirstChild("???").Handle:PivotTo(player.Character.HumanoidRootPart.CFrame)
+    elseif s == "Corrupted Apple" then
+    game.Workspace:FindFirstChild("Corrupted Apple").Handle:PivotTo(player.Character.HumanoidRootPart.CFrame)
+    elseif s == "Apple" then
+    game.Workspace:FindFirstChild("Apple").Handle:PivotTo(player.Character.HumanoidRootPart.CFrame)
+    elseif s == "Soul" then
+    game.Workspace:FindFirstChild("Soul").Handle:PivotTo(player.Character.HumanoidRootPart.CFrame)
+	elseif s == "Pure Apple" then
+    game.Workspace:FindFirstChild("Pure Apple").Handle:PivotTo(player.Character.HumanoidRootPart.CFrame)
+    end
+end)
+
+
+local Tab = Window:NewTab("Locations")
+
+-- Подсекция
+local Section = Tab:NewSection("Functions")
+
+Section:NewButton("Snowdin", "Auto collect souls", function()
+player.Character:PivotTo(CFrame.new(-756.256531, 1994.82581, 10588.4111, 3.98390165e-09, -2.96245162e-08, -1, 2.50955723e-09, 1, -2.96245162e-08, 1, -2.50955723e-09, 3.98390165e-09))
+end)
+
+Section:NewButton("DoodleSphere", "Auto collect souls", function()
+player.Character:PivotTo(CFrame.new(3554.62817, 996.247498, 3920.05298, 1, -1.04723647e-07, 9.33365256e-15, 1.04723647e-07, 1, -2.20702603e-08, -7.02237451e-15, 2.20702603e-08, 1))
+end)
+
+Section:NewButton("City", "Auto collect souls", function()
+player.Character:PivotTo(CFrame.new(-1359.90332, 205.235153, 2150.96338, 0.999592483, -4.21742605e-08, 0.0285448842, 4.1632628e-08, 1, 1.95690646e-08, -0.0285448842, -1.83726918e-08, 0.999592483))
+end)
+
+Section:NewButton("Vip Room", "Auto collect souls", function()
+player.Character:PivotTo(CFrame.new(-6470.00977, 830.822021, 9169.65332, 1, 0, 0, 0, 1, 0, 0, 0, 1))
+end)
+
+Section:NewButton("Ruins Exit", "Auto collect souls", function()
+player.Character:PivotTo(CFrame.new(-676.994263, 1990.14404, 11484.7842, -0.477178067, -1.97305887e-08, -0.878806651, -1.74669186e-08, 1, -1.29673108e-08, 0.878806651, 9.16232779e-09, -0.477178067))
+end)
+
+Section:NewButton("Lobby", "Auto collect souls", function()
+for i , obj in pairs(game.Workspace.Map.Ruins:GetChildren()) do
+	if obj.Name == "Safe" then
+		obj:Destroy()
+	end
+end
+wait(0.01)
+player.Character:PivotTo(CFrame.new(122.102119, 25.2653675, 293.168396, -0.998823166, -4.63327865e-08, -0.0485009402, -4.19356745e-08, 1, -9.16779328e-08, 0.0485009402, -8.95361225e-08, -0.998823166))
+end)
+
+local Tab = Window:NewTab("Battle Boxes Join")
+
+-- Подсекция
+local Section = Tab:NewSection("Functions")
+
+Section:NewButton("First Fight", "Auto collect souls", function()
+player.Character:PivotTo(game.Workspace.BattleBoxes:GetChildren()[1].TpPart.CFrame)
+end)
+
+Section:NewButton("Two Fight", "Auto collect souls", function()
+player.Character:PivotTo(game.Workspace.BattleBoxes:GetChildren()[2].TpPart.CFrame)
+end)
+
+Section:NewButton("Three Fight", "Auto collect souls", function()
+player.Character:PivotTo(game.Workspace.BattleBoxes:GetChildren()[3].TpPart.CFrame)
+end)
+
+local Tab = Window:NewTab("Helper")
+
+-- Подсекция
+local Section = Tab:NewSection("Functions")
+
+Section:NewButton("Blade Finder", "Auto collect souls", function()
+player.Character:PivotTo(game.Workspace.Snowdin.Item.Q1.CFrame)
+end)
+
+Section:NewButton("Blade Finder 2", "Auto collect souls", function()
+player.Character:PivotTo(game.Workspace.Snowdin.Item.Q1.CFrame)
+end)
