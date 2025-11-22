@@ -159,7 +159,7 @@ end)
 
 Section:NewButton("AutoFarm", "Auto collect souls", function()
 while game.Workspace.DD do
-wait(5)
+wait(10)
 local function looksLikeRandomID(str)
     if not str:match("^[a-zA-Z0-9]+$") then
         return false
