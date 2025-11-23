@@ -190,11 +190,32 @@ end
 end)
 
 Section:NewButton("Collect Souls/Code 1 Time", "Auto collect souls", function()
-for _, obj in pairs(game.Workspace.Snowdin:GetChildren()) do
-wait(0.06)
-if obj.Name:match("^%d+$") then
-obj.CFrame = character.HumanoidRootPart.CFrame
+local function looksLikeRandomID(str)
+    if not str:match("^[a-zA-Z0-9]+$") then
+        return false
+    end
+    local hasDigit = str:find("%d") ~= nil
+    local hasUpper = str:find("%u") ~= nil
+    local hasLower = str:find("%l") ~= nil
+    if #str < 6 then
+        return false
+    end
+    return hasDigit and hasUpper and hasLower
 end
+local targetObjects = {}
+for _, obj in ipairs(workspace.Snowdin:GetChildren()) do
+    if looksLikeRandomID(obj.Name) and obj.Name ~= "CDecor11" and obj.Name ~= "Details1" and obj.Name ~= "Details2" then
+        table.insert(targetObjects, obj)
+    end
+end
+local player = game.Players.LocalPlayer
+for i, obj in ipairs(targetObjects) do
+    task.delay((i - 1) * 0.09, function()
+        -- Проверяем актуальность объекта и персонажа перед телепортом
+        if obj and obj.Parent and player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            obj.CFrame = player.Character.HumanoidRootPart.CFrame
+        end
+    end)
 end
 end)
 
